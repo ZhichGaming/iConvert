@@ -44,6 +44,11 @@ enum VolumeUnit: String, CaseIterable {
     case gallons = "Gallons"
 }
 
+class UnitConverter: ObservableObject {
+    @Published var inputUnit: Double?
+    @Published var outputUnit: Double = 0
+}
+
 struct ContentView: View {
 
     @State var currentConversionType = ConversionType.temp
@@ -52,7 +57,13 @@ struct ContentView: View {
     @State var currentTimeUnit = TimeUnit.seconds
     @State var currentVolumeUnit = VolumeUnit.mililiters
     
-    @State private var inputUnit = 0.0
+    @State var convertToConversionType = ConversionType.temp
+    @State var convertToTempUnit = TempUnit.celcius { didSet { convertTemp() }}
+    @State var convertToLengthUnit = LengthUnit.meters
+    @State var convertToTimeUnit = TimeUnit.seconds
+    @State var convertToVolumeUnit = VolumeUnit.mililiters
+    
+    @ObservedObject var uc: UnitConverter = UnitConverter()
         
     var body: some View {
         NavigationView {
@@ -69,13 +80,60 @@ struct ContentView: View {
                 }
                 // Convert input
                 Section {
-                    DisplayUnit(currentConversionType: $currentConversionType, currentTempUnit: $currentTempUnit, currentLengthUnit: $currentLengthUnit, currentTimeUnit: $currentTimeUnit, currentVolumeUnit: $currentVolumeUnit)
-                    TextField("Enter your input", value: $inputUnit, format: .number)
+                    DisplayUnit(currentConversionType: $currentConversionType, currentTempUnit: $currentTempUnit, currentLengthUnit: $currentLengthUnit, currentTimeUnit: $currentTimeUnit, currentVolumeUnit: $currentVolumeUnit, uc: uc)
+                        .onChange(of: uc.inputUnit) { newValue in
+                            convertTemp()
+                        }
+                        .onChange(of: currentTempUnit) { newValue in
+                            convertTemp()
+                        }
+
+                    TextField("Enter your input", value: $uc.inputUnit, format: .number)
                 } header: {
                     Text("Convert from")
                 }
+                Section {
+                    DisplayUnit(currentConversionType: $convertToConversionType, currentTempUnit: $convertToTempUnit, currentLengthUnit: $convertToLengthUnit, currentTimeUnit: $convertToTimeUnit, currentVolumeUnit: $convertToVolumeUnit, uc: uc)
+                        .onChange(of: convertToTempUnit) { newValue in
+                            convertTemp()
+                        }
+                } header: {
+                    Text("Convert to")
+                }
+                Section {
+                    Text(String(uc.outputUnit))
+                } header: {
+                    Text("Converted result")
+                }
             }
             .navigationTitle("iConvert")
+        }
+    }
+    func convertTemp() {
+        
+        switch currentConversionType {
+        case .temp:
+            let tempInC: Double
+            
+            switch currentTempUnit {
+            case .celcius:
+                tempInC = uc.inputUnit ?? 0
+            case .kelvin:
+                tempInC = (uc.inputUnit ?? 0) - 273.15
+            case .fahrenheit:
+                tempInC = ((uc.inputUnit ?? 0) - 32) * 5/9
+            }
+            
+            switch convertToTempUnit {
+            case .celcius:
+                uc.outputUnit = tempInC
+            case .fahrenheit:
+                uc.outputUnit = (tempInC * 9/5) + 32
+            case .kelvin:
+                uc.outputUnit = tempInC + 273.15
+            }
+        default:
+            break
         }
     }
 }
@@ -88,6 +146,8 @@ struct DisplayUnit: View {
     @Binding var currentTimeUnit: TimeUnit
     @Binding var currentVolumeUnit: VolumeUnit
     
+    @ObservedObject var uc: UnitConverter
+        
     var body: some View {
         switch currentConversionType {
         case .temp:
