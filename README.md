@@ -1,5 +1,5 @@
 # iConvert
-This is a project made for a challenge(Day 19) of Hacking With Swift. 
+This is a project made for a challenge(Day 19 of Hacking With Swift). 
 
 This app made for iPhone can convert temperatures, weight, volume and time units. 
 
