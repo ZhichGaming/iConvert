@@ -57,8 +57,7 @@ struct ContentView: View {
     @State var currentTimeUnit = TimeUnit.seconds
     @State var currentVolumeUnit = VolumeUnit.mililiters
     
-    @State var convertToConversionType = ConversionType.temp
-    @State var convertToTempUnit = TempUnit.celcius { didSet { convertTemp() }}
+    @State var convertToTempUnit = TempUnit.celcius
     @State var convertToLengthUnit = LengthUnit.meters
     @State var convertToTimeUnit = TimeUnit.seconds
     @State var convertToVolumeUnit = VolumeUnit.mililiters
@@ -80,26 +79,55 @@ struct ContentView: View {
                 }
                 // Convert input
                 Section {
-                    DisplayUnit(currentConversionType: $currentConversionType, currentTempUnit: $currentTempUnit, currentLengthUnit: $currentLengthUnit, currentTimeUnit: $currentTimeUnit, currentVolumeUnit: $currentVolumeUnit, uc: uc)
+                    DisplayUnit(currentConversionType: $currentConversionType,
+                                currentTempUnit: $currentTempUnit,
+                                currentLengthUnit: $currentLengthUnit,
+                                currentTimeUnit: $currentTimeUnit,
+                                currentVolumeUnit: $currentVolumeUnit,
+                                uc: uc)
                         .onChange(of: uc.inputUnit) { newValue in
-                            convertTemp()
+                            convertValue()
                         }
                         .onChange(of: currentTempUnit) { newValue in
-                            convertTemp()
+                            convertValue()
                         }
-
+                        .onChange(of: currentLengthUnit) { newValue in
+                            convertValue()
+                        }
+                        .onChange(of: currentTimeUnit) { newValue in
+                            convertValue()
+                        }
+                        .onChange(of: currentVolumeUnit) { newValue in
+                            convertValue()
+                        }
                     TextField("Enter your input", value: $uc.inputUnit, format: .number)
                 } header: {
                     Text("Convert from")
                 }
+                // Convert output unit
                 Section {
-                    DisplayUnit(currentConversionType: $convertToConversionType, currentTempUnit: $convertToTempUnit, currentLengthUnit: $convertToLengthUnit, currentTimeUnit: $convertToTimeUnit, currentVolumeUnit: $convertToVolumeUnit, uc: uc)
+                    DisplayUnit(currentConversionType: $currentConversionType,
+                                currentTempUnit: $convertToTempUnit,
+                                currentLengthUnit: $convertToLengthUnit,
+                                currentTimeUnit: $convertToTimeUnit,
+                                currentVolumeUnit: $convertToVolumeUnit,
+                                uc: uc)
                         .onChange(of: convertToTempUnit) { newValue in
-                            convertTemp()
+                            convertValue()
+                        }
+                        .onChange(of: convertToLengthUnit) { newValue in
+                            convertValue()
+                        }
+                        .onChange(of: convertToTimeUnit) { newValue in
+                            convertValue()
+                        }
+                        .onChange(of: convertToVolumeUnit) { newValue in
+                            convertValue()
                         }
                 } header: {
                     Text("Convert to")
                 }
+                // Output
                 Section {
                     Text(String(uc.outputUnit))
                 } header: {
@@ -109,7 +137,7 @@ struct ContentView: View {
             .navigationTitle("iConvert")
         }
     }
-    func convertTemp() {
+    func convertValue() {
         
         switch currentConversionType {
         case .temp:
@@ -132,8 +160,86 @@ struct ContentView: View {
             case .kelvin:
                 uc.outputUnit = tempInC + 273.15
             }
-        default:
-            break
+        case .length:
+            let lengthInMeters: Double
+            
+            switch currentLengthUnit {
+            case .meters:
+                lengthInMeters = uc.inputUnit ?? 0
+            case .kilometers:
+                lengthInMeters = (uc.inputUnit ?? 0) * 1000
+            case .feet:
+                lengthInMeters = (uc.inputUnit ?? 0) / 3.2808399
+            case .yards:
+                lengthInMeters = (uc.inputUnit ?? 0) / 1.094
+            case .miles:
+                lengthInMeters = (uc.inputUnit ?? 0) * 1609
+            }
+            
+            switch convertToLengthUnit {
+            case .meters:
+                uc.outputUnit = lengthInMeters
+            case .kilometers:
+                uc.outputUnit = lengthInMeters / 1000
+            case .feet:
+                uc.outputUnit = lengthInMeters * 3.2808399
+            case .yards:
+                uc.outputUnit = lengthInMeters * 1.094
+            case .miles:
+                uc.outputUnit = lengthInMeters / 1609
+            }
+        case .time:
+            let lengthInSeconds: Double
+            
+            switch currentTimeUnit {
+            case .seconds:
+                lengthInSeconds = uc.inputUnit ?? 0
+            case .minutes:
+                lengthInSeconds = (uc.inputUnit ?? 0) * 60
+            case .hours:
+                lengthInSeconds = (uc.inputUnit ?? 0) * 3600
+            case .days:
+                lengthInSeconds = (uc.inputUnit ?? 0) * 86400
+            }
+            
+            switch convertToTimeUnit {
+            case .seconds:
+                uc.outputUnit = lengthInSeconds
+            case .minutes:
+                uc.outputUnit = lengthInSeconds / 60
+            case .hours:
+                uc.outputUnit = lengthInSeconds / 3600
+            case .days:
+                uc.outputUnit = lengthInSeconds / 86400
+            }
+        case .volume:
+            let sizeInML: Double
+            
+            switch currentVolumeUnit {
+            case .mililiters:
+                sizeInML = uc.inputUnit ?? 0
+            case .liters:
+                sizeInML = (uc.inputUnit ?? 0) * 1000
+            case .cups:
+                sizeInML = (uc.inputUnit ?? 0) * 236.5882365
+            case .pints:
+                sizeInML = (uc.inputUnit ?? 0) / 473.176473
+            case .gallons:
+                sizeInML = (uc.inputUnit ?? 0) * 4546.09
+            }
+            
+            switch convertToVolumeUnit {
+            case .mililiters:
+                uc.outputUnit = sizeInML
+            case .liters:
+                uc.outputUnit = sizeInML / 1000
+            case .cups:
+                uc.outputUnit = sizeInML / 236.5882365
+            case .pints:
+                uc.outputUnit = sizeInML * 473.176473
+            case .gallons:
+                uc.outputUnit = sizeInML / 4546.09
+            }
         }
     }
 }
